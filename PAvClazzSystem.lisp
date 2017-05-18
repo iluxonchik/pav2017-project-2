@@ -106,7 +106,7 @@
                     :direct-superclasses ',(canonize-direct-superclasses super-classes)
                     :direct-slots ',slots
                     :all-slots ',(canonize-class-slots slots super-classes))
-                    :cpl ',(class-precedance-list name super-classes)
+                    ;;:cpl ',(class-precedance-list name super-classes)
                 ;(mapcar #'(lambda (x) (add-direct-subclass x ',name)) ',super-classes)
                 (dolist (class ',super-classes) (add-direct-subclass class  ',name))
                 (defun ,(!suffix-for-def-class 'make name) (&key ,@slots)
@@ -118,7 +118,39 @@
                 )
         ) )
 
+
 ;;;FINISH PAva CLASS SYSTEM
+
+(defun list-empty (lst)
+    (eql (length lst) 0)
+)
+
+(defun class-precedance-list (cls direct-superclasses)
+   (let* (
+          (cpl_res '())
+          (stack (list cls))
+          (curr_node nil)
+          (curr_node_cpl nil)
+         )
+         (loop while (not (list-empty stack))
+              do (setf curr_node (car stack))
+                 (setf cpl_res (append cpl_res (list curr_node)))
+                 (setf stack (cdr stack))
+
+                 (if curr_node
+                   (progn (setf curr_node_cpl (class-direct-superclasses curr_node))
+                   (setf stack (append curr_node_cpl stack))
+                  )
+                 )
+         )
+    (print cpl_res)
+     cpl_res
+     )
+)
+
+(defun cpl (cls ds)
+  (class-precedance-list cls ds))
+
 
 ;;Some tests
 (def-class person name)
