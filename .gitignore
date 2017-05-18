@@ -1,3 +1,5 @@
 *.FASL
 *.fasl
 *.lisp-temp
+# The Protégé of The D.R.E.s personal files
+slime-master
