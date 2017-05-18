@@ -28,7 +28,7 @@
 (defun class-direct-superclasses (class)
     (let* ((class-object (get-class-with-error class))
             (direct-superclasses (gethash 'direct-superclasses class-object)))
-        direct-superclasses))
+            direct-superclasses))
 
 (defun class-direct-subclasses (class)
     (let* ((class-object (get-class-with-error class))
@@ -41,10 +41,15 @@
         cpl))
 
 ;;; FINISH GETTERS
-;unsure of how to implement interssesion at the
-;moment so its better to leave this blank
-;;; SETTERS
 
+;;; SETTERS
+(defun (setf class-direct-subclasses) (new-value class)
+    (let ((class-object (get-class-with-error class)))
+        (setf (gethash 'direct-subclasses class-object) new-value)))
+
+(defun add-direct-subclass (class new-direct-subclass)
+    (let ((current-direct-subclasses (class-direct-subclasses class)))
+        (setf (class-direct-subclasses class) (nconc current-direct-subclasses (list new-direct-subclass)))))
 ;;; FINISH SETTERS
 
 (defun make-class-def (name &key direct-slots all-slots direct-superclasses direct-subclasses cpl)
@@ -59,9 +64,11 @@
          (setf (gethash 'cpl class) cpl)
          (setf (get-class name) class))))
 
+(make-class-def 'standard-pav-class)
+
 ;; FINISH META CLASS DEFINITION
 
-;; DEFMACRO DEF-CLASS HELPER FUNCTIONS
+;; (MACRO DEF-CLASS) HELPER FUNCTIONS
 
 (defun canonize-class-slots (direct-slots class-precedance-list)
     direct-slots)
@@ -71,6 +78,10 @@
         super-classes
         (progn (mapcar #'(lambda (class-symbol) (get-class-with-error class-symbol)) super-classes)
             super-classes)))
+
+(defun class-precedance-list (class direct-superclasses)
+    ;empty method right now waiting for ILLYA
+    direct-superclasses)
 
 (defun !suffix-for-def-class (symbol suffix)
   (intern (concatenate 'string (string symbol) "-" (string suffix))))
@@ -85,19 +96,21 @@
     `(defun (setf ,(!suffix-for-def-class class-name slot-name)) (new-value object)
         (setf (gethash ',slot-name object) new-value)))
 
-;; FINISH DEFMACRO DEF-CLASS HELPER FUNCTIONS
+;; FINISH (MACRO DEF-CLASS) HELPER FUNCTIONS
 
 (defmacro def-class (class &rest slots)
-      (let* ((class-definition (if (listp class) class (list class nil)))
+      (let* ((class-definition (if (listp class) class (list class 'standard-pav-class)))
         (name (first class-definition))
         (super-classes (cdr class-definition)))
         `(progn (make-class-def ',name
                     :direct-superclasses ',(canonize-direct-superclasses super-classes)
                     :direct-slots ',slots
                     :all-slots ',(canonize-class-slots slots super-classes))
+                    :cpl ',(class-precedance-list name super-classes)
+                ;(mapcar #'(lambda (x) (add-direct-subclass x ',name)) ',super-classes)
+                (dolist (class ',super-classes) (add-direct-subclass class  ',name))
                 (defun ,(!suffix-for-def-class 'make name) (&key ,@slots)
                           (let ((class (make-hash-table)))
-                            ()
                             ,@(mapcar #'(lambda (x) `(setf (gethash ',x class) ,x)) slots)
                           class))
                 ,@(mapcar #'(lambda (x) (!create-getter-for-class name x)) slots)
