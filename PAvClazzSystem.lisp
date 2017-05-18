@@ -105,8 +105,8 @@
         `(progn (make-class-def ',name
                     :direct-superclasses ',(canonize-direct-superclasses super-classes)
                     :direct-slots ',slots
-                    :all-slots ',(canonize-class-slots slots super-classes))
-                    ;;:cpl ',(class-precedance-list name super-classes)
+                    :all-slots ',(canonize-class-slots slots super-classes)
+                    :cpl ',(class-precedance-list name super-classes))
                 ;(mapcar #'(lambda (x) (add-direct-subclass x ',name)) ',super-classes)
                 (dolist (class ',super-classes) (add-direct-subclass class  ',name))
                 (defun ,(!suffix-for-def-class 'make name) (&key ,@slots)
@@ -127,8 +127,8 @@
 
 (defun class-precedance-list (cls direct-superclasses)
    (let* (
-          (cpl_res '())
-          (stack (list cls))
+          (cpl_res (list cls))
+          (stack direct-superclasses)
           (curr_node nil)
           (curr_node_cpl nil)
          )
@@ -143,6 +143,7 @@
                   )
                  )
          )
+    (setf cpl_res (remove-duplicates cpl_res))
     (print cpl_res)
      cpl_res
      )
@@ -163,3 +164,10 @@
 (student-id a)
 (setf (student-id a) "ist177966")
 (student-id a)
+
+(def-class h)
+(def-class f)
+(def-class (a h f))
+(def-class (b a))
+(def-class (c a))
+(def-class (d b c))
