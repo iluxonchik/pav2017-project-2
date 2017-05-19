@@ -70,7 +70,7 @@
 
 ;; (MACRO DEF-CLASS) HELPER FUNCTIONS
 
-(defun canonize-class-slots (direct-slots class-precedance-list)
+(defun canonize-class-slots (direct-slots class-precedence-list)
     (labels ((illegal-slot-name (slot reason)
                               (error "The slot ~a cannot be defined. The slot ~a" slot reason))
            (check-slot (slot evaluated-slots)
@@ -79,7 +79,7 @@
                           ((member slot **reserved-slots**)(illegal-slot-name slot "is a reserved keyword."))
                           ((member slot evaluated-slots)(illegal-slot-name slot (format nil "is already defined in a CLASS.")))
              )))
-          (let ((all-slots (apply #'append (loop for class in (cdr class-precedance-list)
+          (let ((all-slots (apply #'append (loop for class in (cdr class-precedence-list)
                                                                      collect (class-direct-slots class)))))
             (loop for slot in direct-slots
                 do (progn (check-slot slot all-slots)
@@ -98,7 +98,7 @@
     (eql (length lst) 0)
 )
 
-(defun class-precedance-list (cls direct-superclasses)
+(defun class-precedence-list (cls direct-superclasses)
    (let* (
           (cpl_res (list cls))
           (stack direct-superclasses)
@@ -140,7 +140,7 @@
       (let* ((class-definition (if (listp class) class (list class 'standard-pav-class)))
         (name (first class-definition))
         (super-classes (cdr class-definition))
-        (cpl (class-precedance-list name super-classes))
+        (cpl (class-precedence-list name super-classes))
         (all-slots (canonize-class-slots slots cpl)))
         `(progn (make-class-def ',name
                     :direct-superclasses ',(canonize-direct-superclasses super-classes)
