@@ -13,7 +13,7 @@
                     class-object)))
 )
 ;; META CLASS DEFINITION
-
+(defvar **reserved-slots** '(standard-pav-class meta-object-name))
 ;;; GETTERS
 (defun class-direct-slots (class)
     (let* ((class-object (get-class-with-error class))
@@ -71,17 +71,22 @@
 ;; (MACRO DEF-CLASS) HELPER FUNCTIONS
 
 (defun canonize-class-slots (direct-slots class-precedance-list)
-    (flet ((illegal-slot-name (slot reason)
-                              (error "The slot ~a cannot be defined. The slot ~a" slot reason)))
-          (let ((all-slots (append direct-slots (apply #'append (loop for class in (cdr class-precedance-list)
-                                                                 collect (class-direct-slots class))))))
-            (loop for slot in all-slots
-                do (cond ((not (symbolp slot))(illegal-slot-name slot "is not a symbol."))
-                      ((keywordp slot)(illegal-slot-name slot "is a keyword."))
-                      ;((member name **reserved-slots**)(illegal-slot-name slot "is a reserved keyword."))
-                      ;;((member slot all-slots)(illegal-slot-name slot "is already defined somewhere else."))
-                  ))
+    (labels ((illegal-slot-name (slot reason)
+                              (error "The slot ~a cannot be defined. The slot ~a" slot reason))
+           (check-slot (slot evaluated-slots)
+                        (cond ((not (symbolp slot))(illegal-slot-name slot "is not a symbol."))
+                          ((keywordp slot)(illegal-slot-name slot "is a keyword."))
+                          ((member slot **reserved-slots**)(illegal-slot-name slot "is a reserved keyword."))
+                          ((member slot evaluated-slots)(illegal-slot-name slot (format nil "is already defined in a CLASS.")))
+             )))
+          (let ((all-slots (apply #'append (loop for class in (cdr class-precedance-list)
+                                                                     collect (class-direct-slots class)))))
+            (loop for slot in direct-slots
+                do (progn (check-slot slot all-slots)
+                          (setf all-slots (append all-slots (list slot)))))
             all-slots)))
+
+
 
 (defun canonize-direct-superclasses (super-classes)
     (if (null (first super-classes))
@@ -153,7 +158,7 @@
                   (not (null (member ',name (class-cpl meta-object))))))
                 ,@(mapcar #'(lambda (x) (!create-getter-for-class name x)) all-slots)
                 ,@(mapcar #'(lambda (x) (!create-setter-for-class name x)) all-slots)
-                )
+                (format nil "<DEF-CLASS ~{~a ~}>" '(The class ,name with slots (,@slots) and superclasses (,@super-classes) has been defined.)))
         ) )
 
 
